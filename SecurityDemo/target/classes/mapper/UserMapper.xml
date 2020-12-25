@@ -14,7 +14,7 @@
         `id`,`userName`,`password`,`role`
     </sql>
 
-    <insert id="saveUser" parameterMap="User">
+    <insert id="saveUser" parameterType="User">
         INSERT INTO sys_user(`userName`,`password`,`role`) VALUES(#{userName},#{password},#{role})
     </insert>
 

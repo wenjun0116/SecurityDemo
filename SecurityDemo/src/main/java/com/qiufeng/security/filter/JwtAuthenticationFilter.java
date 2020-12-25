@@ -1,5 +1,6 @@
 package com.qiufeng.security.filter;
 
+import com.alibaba.fastjson.JSON;
 import com.qiufeng.security.domain.JwtUser;
 import com.qiufeng.security.domain.User;
 import com.qiufeng.security.utils.JwtUtils;
@@ -9,14 +10,24 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import sun.plugin.liveconnect.SecurityContextHelper;
 
+import javax.annotation.Resource;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpUtils;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 验证用户名密码正确后，生成一个token，并将token返回客户端
@@ -27,7 +38,7 @@ import java.util.Collection;
  */
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
@@ -45,6 +56,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         }
         catch (Exception e) {
             e.printStackTrace();
+            System.out.println("权限认证失败====================================》");
             return null;
         }
     }
@@ -60,8 +72,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      */
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        JwtUser jwtUser = (JwtUser) authResult.getPrincipal();
-        System.out.println("jwtUser-------->" + jwtUser.getUsername());
+        org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authResult.getPrincipal();
+        JwtUser jwtUser = new JwtUser(user);
 
         String role = "";
         Collection<? extends GrantedAuthority> authorities = jwtUser.getAuthorities();
@@ -70,13 +82,22 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         }
 
         String token = JwtUtils.createToken(jwtUser.getUsername(),role);
+        Map<String,String> map = new HashMap<>();
+        map.put(JwtUtils.TOKEN_HEADER,JwtUtils.TOKEN_PREFIX+token);
+        response.getWriter().print(JSON.toJSON(map));
         //返回创建成功的token
         //但是这里创建的token只是单纯的token
         //按照jwt的规定，最后请求的时候应该是`Bearer token`
-        response.setCharacterEncoding("UTF-8");
-        response.setContentType("application/json;charset=utf-8");
-        String tokenStr = JwtUtils.TOKEN_PREFIX + token;
-        response.setHeader("token",tokenStr);
+//        response.setCharacterEncoding("UTF-8");
+//        response.setContentType("application/json;charset=utf-8");
+//        String tokenStr = JwtUtils.TOKEN_PREFIX + token;
+//        response.setHeader("Access-Control-Expose-Headers","Authorization");
+//        response.setHeader(JwtUtils.TOKEN_HEADER,tokenStr);
+//        SecurityContextHolder.getContext().setAuthentication(authResult);
+//        RememberMeServices rememberMeServices = getRememberMeServices();
+//        rememberMeServices.loginSuccess(request,response,authResult);
+//        AuthenticationSuccessHandler successHandler = getSuccessHandler();
+//        successHandler.onAuthenticationSuccess(request,response,authResult);
     }
 
     /**

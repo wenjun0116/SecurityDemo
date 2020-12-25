@@ -15,8 +15,8 @@ public class TaskController {
         return "返回集合";
     }
 
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAnyRole('ROLE_USER')")
     public String task() {
         return "添加任务";
     }

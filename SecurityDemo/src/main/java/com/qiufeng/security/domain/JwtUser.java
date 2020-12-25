@@ -1,9 +1,8 @@
 package com.qiufeng.security.domain;
 
-import com.qiufeng.security.domain.User;
-import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
@@ -14,23 +13,24 @@ import java.util.Collections;
  */
 public class JwtUser implements UserDetails {
 
-    private Integer id;
-
     private String userName;
 
     private String password;
 
     private Collection<? extends GrantedAuthority> authorities;
 
+    public JwtUser() {
+
+    }
+
     /**
      * 创建JwtUser
      * @param user
      */
     public JwtUser(User user) {
-        id = user.getId();
-        userName = user.getUserName();
+        userName = user.getUsername();
         password = user.getPassword();
-        authorities = Collections.singleton(new SimpleGrantedAuthority(user.getRole()));
+        authorities = user.getAuthorities();
     }
 
 
